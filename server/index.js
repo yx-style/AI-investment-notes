@@ -53,9 +53,10 @@ wss.on("connection", (ws) => {
           session.previousNotes = null;
           session.lastNoteTime = Date.now();
 
-          session.deepgramConnection = createDeepgramConnection({
-            language: data.language || "multi",
-            onTranscript: (transcript) => {
+          try {
+            session.deepgramConnection = createDeepgramConnection({
+              language: data.language || "multi",
+              onTranscript: (transcript) => {
               if (ws.readyState === ws.OPEN) {
                 ws.send(JSON.stringify(transcript));
               }
@@ -74,6 +75,12 @@ wss.on("connection", (ws) => {
               console.log("Deepgram connection closed");
             },
           });
+          } catch (dgErr) {
+            console.error("Deepgram connection failed:", dgErr.message);
+            if (ws.readyState === ws.OPEN) {
+              ws.send(JSON.stringify({ type: "error", message: dgErr.message }));
+            }
+          }
         } else if (data.type === "stop") {
           console.log("Stopping transcription");
           if (session.deepgramConnection) {

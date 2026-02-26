@@ -1,9 +1,19 @@
 import { createClient, LiveTranscriptionEvents } from "@deepgram/sdk";
 
-const deepgram = createClient(process.env.DEEPGRAM_API_KEY);
+let deepgram = null;
+
+function getClient() {
+  if (!deepgram) {
+    if (!process.env.DEEPGRAM_API_KEY) {
+      throw new Error("DEEPGRAM_API_KEY is not set. Check your .env file.");
+    }
+    deepgram = createClient(process.env.DEEPGRAM_API_KEY);
+  }
+  return deepgram;
+}
 
 export function createDeepgramConnection({ language, onTranscript, onError, onClose }) {
-  const connection = deepgram.listen.live({
+  const connection = getClient().listen.live({
     model: "nova-3",
     language: language || "multi",
     smart_format: true,
